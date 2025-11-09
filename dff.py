@@ -3,7 +3,6 @@ import os
 import sys
 import time
 from typing import Dict, List, Callable, Optional
-from pathlib import Path
 
 
 class DuplicateFileFinderConfig:
@@ -455,6 +454,24 @@ class DuplicateFileFinder:
         """
         if not verbose_only or self.config.verbose_output:
             self.output_manager.unicode_safe_print(message)
+
+
+def get_md5_hash(file_path):
+    """
+    Calculates the MD5 hash of a given file.
+    Handles large files by reading them in chunks.
+    """
+    md5_hash = hashlib.md5()
+    try:
+        with open(file_path, "rb") as f:
+            # Read and update hash in chunks of 4KB
+            for byte_block in iter(lambda: f.read(4096), b""):
+                md5_hash.update(byte_block)
+        return md5_hash.hexdigest()
+    except FileNotFoundError:
+        return "File not found."
+    except Exception as e:
+        return f"An error occurred: {e}"
 
 
 # Пример использования
