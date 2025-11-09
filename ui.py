@@ -6,7 +6,7 @@ import sys
 from PySide6.QtWidgets import QApplication, QMainWindow, QMenu, QTableWidgetItem, QFileDialog
 from PySide6.QtCore import QRect, QCoreApplication
 from PySide6.QtGui import QIcon
-from dff import DFF
+from dff import DuplicateFileFinder
 
 from design.ui_MainWindow import Ui_MainWindow
 
@@ -14,7 +14,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
 
-        self.DFF = DFF()
+        self.DFF = DuplicateFileFinder()
         self.progress_text = ""
 
         self.ui = Ui_MainWindow()
@@ -45,7 +45,7 @@ class MainWindow(QMainWindow):
     def scan(self):
         self.ui.progressBar.setValue(0)
         self.progress_text = ""
-        print(self.DFF.find_file_duplicates(self.ui.path_lineEdit.text(), lambda t, d: self.insert_progress(t, d)))
+        print(self.DFF.find_duplicates(self.ui.path_lineEdit.text(), lambda t, d: self.insert_progress(t, d)))
         self.ui.progressBar.setValue(100)
 
 
