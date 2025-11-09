@@ -27,6 +27,7 @@ class ProgressTracker:
         self.megabytes_scanned = 0.0
         self.files_scanned = 0
         self.total_files = 0
+        self.duples_found = 0
         self.progress_callback: Optional[Callable[[str, bool, object], None]] = None
 
     def reset(self):
@@ -34,6 +35,7 @@ class ProgressTracker:
         self.megabytes_scanned = 0.0
         self.files_scanned = 0
         self.total_files = 0
+        self.duples_found = 0
 
     def set_progress_callback(self, callback: Callable[[str, bool], None]):
         """Устанавливает функцию обратного вызова для отображения прогресса"""
@@ -373,7 +375,7 @@ class DuplicateFileFinder:
             duplicates = self._find_hash_duplicates()
 
             # Этап 3: Вывод статистики
-            self._print_summary(len(duplicates), start_time)
+            self._print_summary(self.progress.duples_found, start_time)
 
             return duplicates
 
@@ -414,6 +416,7 @@ class DuplicateFileFinder:
                 if duplicate_file_path:
                     # Найден настоящий дубликат
                     duplicates_list.append((duplicate_file_path, file_path))
+                    self.progress.duples_found += 1
                     self.duplicate_handler.display_duplicate(duplicate_file_path, file_path)
                 else:
                     self.progress.show_progress(

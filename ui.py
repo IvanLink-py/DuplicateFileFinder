@@ -80,7 +80,7 @@ class MainWindow(QMainWindow):
                 self.ui.progress_textEdit.verticalScrollBar().setValue(cur_max)
 
             self.ui.topic_label.setText(
-                self.topic_template.format(progress.total_files, progress.files_scanned, progress.megabytes_scanned, 0))
+                self.topic_template.format(progress.total_files, progress.files_scanned, progress.megabytes_scanned, progress.duples_found))
 
             if progress.total_files:
                 self.ui.progressBar.setValue(round(progress.files_scanned / progress.total_files * 100, 1))
@@ -93,6 +93,9 @@ class MainWindow(QMainWindow):
             self.ui.path_lineEdit.setText(new_path)
 
     def scan(self):
+
+        self.ui.tabWidget.setCurrentIndex(0)
+
         self.ui.scan_pushButton.setEnabled(False)
         self.ui.progressBar.setValue(0)
         self.ui.progressBar_2.setValue(0)
@@ -106,6 +109,8 @@ class MainWindow(QMainWindow):
         self.ui.progressBar.setValue(100)
         self.ui.progressBar_2.setValue(100)
         self.ui.scan_pushButton.setEnabled(True)
+
+        self.ui.tabWidget.setCurrentIndex(1)
 
 
 
