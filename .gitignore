@@ -2,3 +2,5 @@
 *.class
 delete_unit_test
 delete_filename_length
+/.idea
+/design/__pycache__
