@@ -1,13 +1,8 @@
-#!/usr/bin/python3
-import argparse
 import hashlib
 import os
 import stat
 import sys
 import time
-
-version = "0.10.0"
-
 
 # Flags
 verbose_output = None
@@ -25,36 +20,11 @@ BYTES_IN_A_MEGABYTE = 1048576
 BYTES_TO_SCAN = 4096
 SCAN_SIZE_MB = BYTES_TO_SCAN / BYTES_IN_A_MEGABYTE
 
-
-def clear_globals_for_unittests():
-    global stdout
-    global megabytes_scanned
-    stdout = ""
-    megabytes_scanned = 0
+# Progress
+SHOW_PROGRESS = lambda t, d: ...
 
 
-def set_verbose_output(b):
-    global verbose_output
-    verbose_output = b
-
-
-def set_output_immediately(b):
-    global output_immediately
-    output_immediately = b
-
-
-def set_trial_delete(b):
-    global trial_delete
-    trial_delete = b
-
-
-def set_delete_shorter(b):
-    global delete_shorter
-    delete_shorter = b
-
-
-class fileFullHash:
-
+class FileFullHash:
     full: dict = {}
 
     def __init__(self):
@@ -75,43 +45,13 @@ class fileFullHash:
 
     def hash_full(self, file_path):
         global megabytes_scanned
-        verbose("...calculating full hash of " + file_path)
+        SHOW_PROGRESS("...calculating full hash of " + file_path, True)
         file_hash = hashlib.blake2b()
         with open(file_path, "rb") as f:
             for chunk in iter(lambda: f.read(BYTES_TO_SCAN), b""):
                 file_hash.update(chunk)
                 megabytes_scanned += SCAN_SIZE_MB
         return file_hash.hexdigest()
-
-
-def hash_snip(file_path):
-    global megabytes_scanned
-    verbose("...calculating hash snippet of " + file_path)
-    snip_hash = hashlib.blake2b()
-    try:
-        with open(file_path, "rb") as f:
-            for chunk in iter(lambda: f.read(BYTES_TO_SCAN), b""):
-                snip_hash.update(chunk)
-                f.close()
-                megabytes_scanned += SCAN_SIZE_MB
-                return snip_hash.hexdigest()
-    except PermissionError:
-        output("PermissionError: " + file_path + "\n")
-        return "PermissionError:" + file_path
-
-
-def verbose(out):
-    if verbose_output:
-        return output(out)
-    return
-
-
-def output(out):
-    global stdout
-    if output_immediately:
-        unicode_output(out)
-    else:
-        stdout += out + "\n"
 
 
 def unicode_output(out):
@@ -127,56 +67,77 @@ def unicode_output(out):
             print(out.encode("utf8").decode(sys.stdout.encoding, errors="ignore") + " <-- UnicodeDecodeError")
 
 
-def dff(path, delete_duplicates=False):
-    output("\n" + time.strftime("%X : ") + "Finding duplicate files at " + path + "\n")
-    start_time = time.time()
+class DFF:
+    def find_file_duplicates(self, path, show_progress):
+        global SHOW_PROGRESS
+        SHOW_PROGRESS = show_progress
 
-    sizes = fileSizes()
-    sizes.find_files_with_duplicate_file_size(path)
+        start_time = time.time()
+        SHOW_PROGRESS(time.strftime("%X : "), False)
 
-    snip = dict()
-    full_hash = fileFullHash()
+        sizes = FileSizes()
+        sizes.find_files_with_duplicate_file_size(path)
 
-    duplicate_count = 0
-    file_count = 0
+        snip = dict()
+        full_hash = FileFullHash()
 
-    for current_file_path in sizes.files_list:
-        file_count += 1
-        verbose("Processing file " + current_file_path)
-        current_file_snip_hash = hash_snip(current_file_path)
-        if current_file_snip_hash in snip:
-            dupe_file_path = full_hash.search_duplicate(snip[current_file_snip_hash], current_file_path)
-            if dupe_file_path:
-                display_duplicate_and_optionally_delete(dupe_file_path, current_file_path, delete_duplicates)
-                duplicate_count += 1
+        duplicate_count = 0
+        file_count = 0
+
+        for current_file_path in sizes.files_list:
+            file_count += 1
+            SHOW_PROGRESS("Processing file " + current_file_path, True)
+            current_file_snip_hash = self.hash_snip(current_file_path)
+            if current_file_snip_hash in snip:
+                dupe_file_path = full_hash.search_duplicate(snip[current_file_snip_hash], current_file_path)
+                if dupe_file_path:
+                    display_duplicate(dupe_file_path, current_file_path)
+                    duplicate_count += 1
+                else:
+                    SHOW_PROGRESS("...first 4096 bytes are the same, but files are different", True)
             else:
-                verbose("...first 4096 bytes are the same, but files are different")
-        else:
-            snip[current_file_snip_hash] = current_file_path
+                snip[current_file_snip_hash] = current_file_path
 
-    output(
-        "\n"
-        + time.strftime("%X : ")
-        + str(duplicate_count)
-        + " duplicate files found, "
-        + str(file_count)
-        + " files and "
-        + str(megabytes_scanned)
-        + " megabytes scanned in "
-        + str(round(time.time() - start_time, 3))
-        + " seconds, "
-        + str(sizes.file_count)
-        + " files assessed"
-    )
+        SHOW_PROGRESS(
+            "\n"
+            + time.strftime("%X : ")
+            + str(duplicate_count)
+            + " duplicate files found, "
+            + str(file_count)
+            + " files and "
+            + str(megabytes_scanned)
+            + " megabytes scanned in "
+            + str(round(time.time() - start_time, 3))
+            + " seconds, "
+            + str(sizes.file_count)
+            + " files assessed",
+            False
+        )
 
-    if failed_delete_count:
-        output("\n" + "failed to delete " + str(failed_delete_count) + " duplicates - rerun script")
+        if failed_delete_count:
+            SHOW_PROGRESS("\n" + "failed to delete " + str(failed_delete_count) + " duplicates - rerun script", False)
 
-    return stdout
+        return stdout
+
+    @staticmethod
+    def hash_snip(file_path):
+        global megabytes_scanned
+        SHOW_PROGRESS("...calculating hash snippet of " + file_path, True)
+        snip_hash = hashlib.blake2b()
+        try:
+            with open(file_path, "rb") as f:
+                for chunk in iter(lambda: f.read(BYTES_TO_SCAN), b""):
+                    snip_hash.update(chunk)
+                    f.close()
+                    megabytes_scanned += SCAN_SIZE_MB
+                    return snip_hash.hexdigest()
+                return "UnexpectedError:" + file_path
+        except PermissionError:
+            SHOW_PROGRESS("PermissionError: " + file_path + "\n", False)
+            return "PermissionError:" + file_path
 
 
-class fileSizes:
-
+class FileSizes:
     sizes: dict = {}
     files_to_process: dict = {}
     files_list: list = []  # want to process files in os.walk order, not some unknown order
@@ -194,7 +155,7 @@ class fileSizes:
             for file_name in files:
                 self.file_count += 1
                 current_file_path = os.path.join(root, file_name)
-                verbose("Checking size of file " + current_file_path)
+                SHOW_PROGRESS("Checking size of file " + current_file_path, True)
                 try:
                     file_size = os.path.getsize(current_file_path)
                 except FileNotFoundError:  # in case of symlink to nowhere
@@ -204,7 +165,7 @@ class fileSizes:
 
     def add_file(self, current_file_path, size):
         if size in self.sizes:
-            verbose(current_file_path + " has non unique file size [" + str(size) + " bytes]")
+            SHOW_PROGRESS(current_file_path + " has non unique file size [" + str(size) + " bytes]", False)
             self.add_original_file_to_process_list(self.sizes[size])
             self.add_file_to_process_list(current_file_path)
         else:
@@ -212,37 +173,31 @@ class fileSizes:
 
     def add_original_file_to_process_list(self, original_file_path):
         if original_file_path in self.files_to_process:
-            verbose(original_file_path + " is a known size duplicate")
+            SHOW_PROGRESS(original_file_path + " is a known size duplicate", True)
             return
         self.add_file_to_process_list(original_file_path)
 
     def add_file_to_process_list(self, file_path):
         self.files_to_process[file_path] = True
         self.files_list.append(file_path)
-        verbose(file_path + " added to process list")
+        SHOW_PROGRESS(file_path + " added to process list", True)
 
 
-def display_duplicate_and_optionally_delete(previously_hashed_file_path, current_file_path, delete_duplicates):
-
+def display_duplicate(previously_hashed_file_path, current_file_path):
     current_file_message = "            "
     previously_hashed_file_message = ""
-    if delete_duplicates:
-        previously_hashed_file_message, current_file_message = delete_duplicate_and_get_message(
-            previously_hashed_file_path, current_file_path
-        )
 
-    output(
+    SHOW_PROGRESS(
         current_file_message
         + current_file_path
         + "\n is dupe of "
         + previously_hashed_file_path
         + previously_hashed_file_message
-        + "\n"
+        + "\n", False
     )
 
 
 def delete_duplicate_and_get_message(previously_hashed_file_path, current_file_path):
-
     delete_file_path = current_file_path
     previously_hashed_file_message = ""
     current_file_message = "deleted ... "
@@ -265,48 +220,3 @@ def delete_duplicate_and_get_message(previously_hashed_file_path, current_file_p
             failed_delete_count += 1
 
     return previously_hashed_file_message, current_file_message
-
-
-parser = argparse.ArgumentParser(description="Find duplicate files in target path and sub folders.")
-parser.add_argument("--path", dest="path", required=False, action="store", help="Target path")
-parser.add_argument("--version", action="version", version=version)
-parser.add_argument(
-    "--verbose", action="store_true", dest="verbose", default=False, help="Will output extra info on logic"
-)
-parser.add_argument(
-    "--delayed",
-    action="store_true",
-    dest="output_delayed",
-    default=False,
-    help="Will display stdout at end instead of immediately",
-)
-parser.add_argument(
-    "--delete", action="store_true", dest="delete", default=False, help="Deletes any duplicate files found"
-)
-parser.add_argument(
-    "--trial",
-    action="store_true",
-    dest="trial_delete",
-    default=False,
-    help="Displays files to delete without actually deleting them - use with --delete",
-)
-parser.add_argument(
-    "--shorter",
-    action="store_true",
-    dest="delete_shorter",
-    default=False,
-    help="Deletes file with shorter name rather than always current file - use with --delete",
-)
-
-args = parser.parse_args()
-set_verbose_output(args.verbose)
-set_output_immediately(not args.output_delayed)
-set_trial_delete(args.trial_delete)
-set_delete_shorter(args.delete_shorter)
-
-if args.path:
-    dff(args.path, args.delete)
-    if not output_immediately:
-        print("\nResults...\n")
-        unicode_output(stdout)
-    sys.exit()

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'MainWindowKRvyGL.ui'
+## Form generated from reading UI file 'MainWindowiyjvLk.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.0
 ##
@@ -18,13 +18,14 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QCheckBox, QHBoxLayout, QLabel,
     QLineEdit, QMainWindow, QMenuBar, QProgressBar,
     QPushButton, QScrollArea, QSizePolicy, QSpacerItem,
-    QStatusBar, QVBoxLayout, QWidget)
+    QStatusBar, QTabWidget, QTextEdit, QVBoxLayout,
+    QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(627, 541)
+        MainWindow.resize(894, 544)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout = QVBoxLayout(self.centralwidget)
@@ -63,6 +64,11 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.skipCache_checkBox)
 
+        self.detailProgress_checkBox = QCheckBox(self.centralwidget)
+        self.detailProgress_checkBox.setObjectName(u"detailProgress_checkBox")
+
+        self.horizontalLayout_2.addWidget(self.detailProgress_checkBox)
+
         self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_2.addItem(self.horizontalSpacer_2)
@@ -72,28 +78,63 @@ class Ui_MainWindow(object):
 
         self.progressBar = QProgressBar(self.centralwidget)
         self.progressBar.setObjectName(u"progressBar")
-        self.progressBar.setValue(24)
+        self.progressBar.setValue(0)
 
         self.verticalLayout.addWidget(self.progressBar)
 
-        self.scrollArea = QScrollArea(self.centralwidget)
+        self.topic_label = QLabel(self.centralwidget)
+        self.topic_label.setObjectName(u"topic_label")
+
+        self.verticalLayout.addWidget(self.topic_label)
+
+        self.tabWidget = QTabWidget(self.centralwidget)
+        self.tabWidget.setObjectName(u"tabWidget")
+        self.tab = QWidget()
+        self.tab.setObjectName(u"tab")
+        self.verticalLayout_2 = QVBoxLayout(self.tab)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.progress_textEdit = QTextEdit(self.tab)
+        self.progress_textEdit.setObjectName(u"progress_textEdit")
+        self.progress_textEdit.setReadOnly(True)
+
+        self.verticalLayout_2.addWidget(self.progress_textEdit)
+
+        self.tabWidget.addTab(self.tab, "")
+        self.tab_2 = QWidget()
+        self.tab_2.setObjectName(u"tab_2")
+        self.verticalLayout_3 = QVBoxLayout(self.tab_2)
+        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        self.scrollArea = QScrollArea(self.tab_2)
         self.scrollArea.setObjectName(u"scrollArea")
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 607, 329))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 850, 285))
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
-        self.verticalLayout.addWidget(self.scrollArea)
+        self.verticalLayout_3.addWidget(self.scrollArea)
+
+        self.tabWidget.addTab(self.tab_2, "")
+
+        self.verticalLayout.addWidget(self.tabWidget)
 
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.scan_pushButton = QPushButton(self.centralwidget)
+        self.scan_pushButton.setObjectName(u"scan_pushButton")
+        self.scan_pushButton.setStyleSheet(u"background-color: rgb(30, 77, 23);\n"
+"color: rgb(255, 255, 255);")
+
+        self.horizontalLayout_3.addWidget(self.scan_pushButton)
+
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_3.addItem(self.horizontalSpacer)
 
         self.delete_pushButton = QPushButton(self.centralwidget)
         self.delete_pushButton.setObjectName(u"delete_pushButton")
+        self.delete_pushButton.setStyleSheet(u"background-color: rgb(77, 23, 23);\n"
+"color: rgb(255, 255, 255);")
 
         self.horizontalLayout_3.addWidget(self.delete_pushButton)
 
@@ -108,13 +149,16 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 627, 22))
+        self.menubar.setGeometry(QRect(0, 0, 894, 22))
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(MainWindow)
         self.statusbar.setObjectName(u"statusbar")
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
+
+        self.tabWidget.setCurrentIndex(0)
+
 
         QMetaObject.connectSlotsByName(MainWindow)
     # setupUi
@@ -126,6 +170,11 @@ class Ui_MainWindow(object):
         self.pathEdit_pushButton.setText(QCoreApplication.translate("MainWindow", u"...", None))
         self.skipSystem_checkBox.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0440\u043e\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u0441\u0438\u0441\u0442\u0435\u043c\u043d\u044b\u0435 \u0444\u0430\u0439\u043b\u044b", None))
         self.skipCache_checkBox.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0440\u043e\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u043a\u044d\u0448 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u043e\u0432", None))
+        self.detailProgress_checkBox.setText(QCoreApplication.translate("MainWindow", u"\u041f\u043e\u0434\u0440\u043e\u0431\u043d\u044b\u0439 \u043f\u0440\u043e\u0433\u0440\u0435\u0441\u0441", None))
+        self.topic_label.setText("")
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), QCoreApplication.translate("MainWindow", u"\u041f\u0440\u043e\u0433\u0440\u0435\u0441\u0441", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), QCoreApplication.translate("MainWindow", u"\u0420\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442", None))
+        self.scan_pushButton.setText(QCoreApplication.translate("MainWindow", u"\u041f\u043e\u0438\u0441\u043a", None))
         self.delete_pushButton.setText(QCoreApplication.translate("MainWindow", u"\u0423\u0434\u0430\u043b\u0438\u0442\u044c (\u0431\u0435\u0437\u0432\u043e\u0437\u0432\u0440\u0430\u0442\u043d\u043e)", None))
         self.moveToTrash_pushButton.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0435\u0440\u0435\u043c\u0435\u0441\u0442\u0438\u0442\u044c \u0432 \u043a\u0430\u0440\u0437\u0438\u043d\u0443", None))
     # retranslateUi
