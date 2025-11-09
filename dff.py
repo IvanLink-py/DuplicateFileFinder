@@ -1,9 +1,8 @@
 import hashlib
 import os
-import stat
 import sys
 import time
-from typing import Dict, List, Callable, Optional, Tuple
+from typing import Dict, List, Callable, Optional
 from pathlib import Path
 
 
@@ -14,8 +13,6 @@ class DuplicateFileFinderConfig:
         # Флаги конфигурации
         self.verbose_output = False
         self.output_immediately = False
-        self.trial_delete = False  # Пробный режим удаления (не удаляет файлы)
-        self.delete_shorter = False  # Удалять файлы с более короткими именами
 
         # Константы
         self.BYTES_IN_A_MEGABYTE = 1048576
@@ -27,26 +24,42 @@ class ProgressTracker:
     """Класс для отслеживания прогресса сканирования"""
 
     def __init__(self):
+        self.megabytes_to_scan = 0.0
         self.megabytes_scanned = 0.0
-        self.failed_delete_count = 0
-        self.progress_callback: Optional[Callable[[str, bool], None]] = None
+        self.files_scanned = 0
+        self.total_files = 0
+        self.progress_callback: Optional[Callable[[str, bool, object], None]] = None
+
+    def reset(self):
+        self.megabytes_to_scan = 0.0
+        self.megabytes_scanned = 0.0
+        self.files_scanned = 0
+        self.total_files = 0
 
     def set_progress_callback(self, callback: Callable[[str, bool], None]):
         """Устанавливает функцию обратного вызова для отображения прогресса"""
         self.progress_callback = callback
 
+    def set_total_files(self, total_files: int):
+        """Устанавливает общее кол-во файлов в директории"""
+        self.total_files = total_files
+
+    def set_megabytes_to_scan(self, total_mb: float):
+        """Устанавливает общее размер файлов к сканированию"""
+        self.megabytes_to_scan = total_mb / (1024 * 1024)
+
     def show_progress(self, message: str, verbose_only: bool = False):
         """Отображает прогресс выполнения"""
         if self.progress_callback:
-            self.progress_callback(message, verbose_only)
+            self.progress_callback(message, verbose_only, self)
 
     def add_scanned_bytes(self, bytes_count: int):
         """Добавляет количество просканированных байт"""
         self.megabytes_scanned += bytes_count / (1024 * 1024)
 
-    def increment_failed_deletes(self):
-        """Увеличивает счетчик неудачных удалений"""
-        self.failed_delete_count += 1
+    def inc_scanned_files(self):
+        """Увеличивает количество просканированных файлов"""
+        self.files_scanned += 1
 
 
 class FileHashCalculator:
@@ -167,14 +180,13 @@ class FileSizeAnalyzer:
         Args:
             directory_path: Путь к директории для сканирования
         """
-        self.total_files_count = 0
 
         try:
             for root, _, files in sorted(os.walk(directory_path)):
                 files.sort()
                 for file_name in files:
-                    self.total_files_count += 1
                     file_path = os.path.join(root, file_name)
+                    self.progress.inc_scanned_files()
                     self.progress.show_progress(f"Проверка размера файла {file_path}", True)
 
                     try:
@@ -251,52 +263,11 @@ class DuplicateHandler:
             duplicate_file: Путь к файлу-дубликату
         """
         message = (
-            f"            {duplicate_file}\n"
-            f" является дубликатом {original_file}\n"
+            f" Найден дубликат: \n"
+            f" {duplicate_file}\n"
+            f" {original_file}\n"
         )
         self.progress.show_progress(message, False)
-
-    def delete_duplicate(self, original_file: str, duplicate_file: str) -> Tuple[str, str]:
-        """
-        Удаляет файл-дубликат
-
-        Args:
-            original_file: Путь к оригинальному файлу
-            duplicate_file: Путь к файлу-дубликату
-
-        Returns:
-            Кортеж сообщений для оригинального и дублируемого файлов
-        """
-        file_to_delete = duplicate_file
-        original_message = ""
-        duplicate_message = "удален ... "
-
-        if self.config.delete_shorter:
-            # Удаляем файл с более коротким именем
-            original_name = os.path.basename(original_file)
-            duplicate_name = os.path.basename(duplicate_file)
-
-            if len(original_name) < len(duplicate_name):
-                file_to_delete = original_file
-                original_message = " ... удален"
-                duplicate_message = "            "
-
-        if not self.config.trial_delete:
-            try:
-                # Убираем атрибут "только чтение" и удаляем файл
-                os.chmod(file_to_delete, stat.S_IWRITE)
-                os.remove(file_to_delete)
-                self.progress.show_progress(f"Файл {file_to_delete} успешно удален", True)
-            except FileNotFoundError:
-                # Файл уже был удален
-                original_message = " ... уже удален"
-                self.progress.increment_failed_deletes()
-            except (PermissionError, OSError) as e:
-                error_msg = f"Ошибка при удалении файла {file_to_delete}: {e}"
-                self.progress.show_progress(error_msg, False)
-                self.progress.increment_failed_deletes()
-
-        return original_message, duplicate_message
 
 
 class OutputManager:
@@ -346,8 +317,33 @@ class DuplicateFileFinder:
         self.hash_calculator = FileHashCalculator(self.config, self.progress)
         self.duplicate_handler = DuplicateHandler(self.config, self.progress)
 
+    @staticmethod
+    def calculate_total_files(directory_path: str):
+        """
+        Подсчитывает файлы используя os.walk() для обхода дерева каталогов.
+
+        Args:
+            directory_path (str): Путь к каталогу
+
+        Returns:
+            int: Общее количество файлов
+        """
+        if not os.path.exists(directory_path):
+            return 0
+
+        total_files = 0
+
+        try:
+            for root, dirs, files in os.walk(directory_path):
+                total_files += len(files)
+        except PermissionError as e:
+            print(f"Нет доступа к каталогу: {e}")
+            return 0
+
+        return total_files
+
     def find_duplicates(self, directory_path: str,
-                        progress_callback: Optional[Callable[[str, bool], None]] = None) -> str:
+                        progress_callback: Optional[Callable[[str, bool], None]] = None) -> list:
         """
         Основной метод для поиска дубликатов файлов
 
@@ -364,6 +360,9 @@ class DuplicateFileFinder:
             # Устанавливаем стандартный обработчик прогресса
             self.progress.set_progress_callback(self._default_progress_handler)
 
+        self.progress.reset()
+        self.progress.set_total_files(self.calculate_total_files(directory_path))
+
         start_time = time.time()
         self.progress.show_progress(f"{time.strftime('%X')} : Начало поиска дубликатов", False)
 
@@ -372,19 +371,19 @@ class DuplicateFileFinder:
             self.file_size_analyzer.scan_directory(directory_path)
 
             # Этап 2: Поиск дубликатов по хешам
-            duplicate_count = self._find_hash_duplicates()
+            duplicates = self._find_hash_duplicates()
 
             # Этап 3: Вывод статистики
-            self._print_summary(duplicate_count, start_time)
+            self._print_summary(len(duplicates), start_time)
 
-            return self.output_manager.get_output()
+            return duplicates
 
         except Exception as e:
             error_msg = f"Критическая ошибка при поиске дубликатов: {e}"
             self.progress.show_progress(error_msg, False)
             raise
 
-    def _find_hash_duplicates(self) -> int:
+    def _find_hash_duplicates(self) -> list:
         """
         Поиск дубликатов по хешам среди файлов с одинаковыми размерами
 
@@ -392,8 +391,10 @@ class DuplicateFileFinder:
             Количество найденных дубликатов
         """
         snippet_hashes: Dict[str, str] = {}
-        duplicate_count = 0
         processed_files = 0
+        duplicates_list = []
+
+        self.progress.set_megabytes_to_scan(sum([os.path.getsize(f) for f in self.file_size_analyzer.files_list]))
 
         for file_path in self.file_size_analyzer.files_list:
             processed_files += 1
@@ -413,8 +414,8 @@ class DuplicateFileFinder:
 
                 if duplicate_file_path:
                     # Найден настоящий дубликат
+                    duplicates_list.append((duplicate_file_path, file_path))
                     self.duplicate_handler.display_duplicate(duplicate_file_path, file_path)
-                    duplicate_count += 1
                 else:
                     self.progress.show_progress(
                         "...первые 4096 байт одинаковы, но файлы различаются", True
@@ -422,7 +423,7 @@ class DuplicateFileFinder:
             else:
                 snippet_hashes[snippet_hash] = file_path
 
-        return duplicate_count
+        return duplicates_list
 
     def _print_summary(self, duplicate_count: int, start_time: float):
         """
@@ -439,15 +440,10 @@ class DuplicateFileFinder:
             f"{duplicate_count} дубликатов найдено, "
             f"{len(self.file_size_analyzer.files_list)} файлов обработано, "
             f"{self.progress.megabytes_scanned:.2f} мегабайт просканировано за "
-            f"{elapsed_time} секунд, "
-            f"{self.file_size_analyzer.total_files_count} файлов проанализировано"
+            f"{elapsed_time} секунд"
         )
 
         self.progress.show_progress(summary, False)
-
-        if self.progress.failed_delete_count > 0:
-            error_summary = f"\nНе удалось удалить {self.progress.failed_delete_count} дубликатов - запустите скрипт повторно"
-            self.progress.show_progress(error_summary, False)
 
     def _default_progress_handler(self, message: str, verbose_only: bool):
         """

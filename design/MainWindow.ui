@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
-    <height>541</height>
+    <width>894</width>
+    <height>544</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -66,9 +66,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="detailProgress_checkBox">
+       <widget class="QCheckBox" name="skipGit_checkBox">
         <property name="text">
-         <string>Подробный прогресс</string>
+         <string>Пропустить .git</string>
         </property>
        </widget>
       </item>
@@ -85,12 +85,86 @@
         </property>
        </spacer>
       </item>
+      <item>
+       <widget class="QCheckBox" name="detailProgress_checkBox">
+        <property name="text">
+         <string>Подробный прогресс</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>
-     <widget class="QProgressBar" name="progressBar">
-      <property name="value">
-       <number>0</number>
+     <widget class="Line" name="line">
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <widget class="QLabel" name="label_2">
+        <property name="minimumSize">
+         <size>
+          <width>150</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>150</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Быстрое сканирование</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QProgressBar" name="progressBar">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <item>
+       <widget class="QLabel" name="label_3">
+        <property name="minimumSize">
+         <size>
+          <width>150</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>150</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Детальное сканирование</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QProgressBar" name="progressBar_2">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QLabel" name="topic_label">
+      <property name="text">
+       <string/>
       </property>
      </widget>
     </item>
@@ -128,8 +202,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>556</width>
-             <height>282</height>
+             <width>850</width>
+             <height>220</height>
             </rect>
            </property>
           </widget>
@@ -192,7 +266,7 @@ color: rgb(255, 255, 255);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>600</width>
+     <width>894</width>
      <height>22</height>
     </rect>
    </property>
