@@ -73,6 +73,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QLineEdit" name="custom_ignore_lineEdit">
+        <property name="placeholderText">
+         <string>Пропустить файлы</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer_2">
         <property name="orientation">
          <enum>Qt::Orientation::Horizontal</enum>
@@ -203,7 +210,7 @@
              <x>0</x>
              <y>0</y>
              <width>850</width>
-             <height>220</height>
+             <height>218</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_6">

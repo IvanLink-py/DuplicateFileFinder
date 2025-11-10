@@ -3,9 +3,10 @@ import ctypes
 import datetime
 import os
 import sys
+from typing import List
 
 from PySide6.QtCore import QCoreApplication
-from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QFrame
+from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QFrame, QMessageBox
 
 from design.ui_DuplicateWidget import Ui_Frame
 from design.ui_MainWindow import Ui_MainWindow
@@ -62,9 +63,12 @@ class MainWindow(QMainWindow):
 
         self.ui.pathEdit_pushButton.clicked.connect(self.set_path)
         self.ui.scan_pushButton.clicked.connect(self.scan)
-        # self.ui.moveToTrash_pushButton.clicked.connect(self.test)
+        self.ui.moveToTrash_pushButton.clicked.connect(self.move_to_trash)
+        self.ui.delete_pushButton.clicked.connect(self.delete_files)
 
         self.ui.topic_label.setText(self.topic_template.format(0, 0, 0, 0))
+
+        self.duplicates: List[DuplicateWidget] = []
 
     def insert_progress(self, text, detailed, progress):
         QCoreApplication.processEvents()
@@ -118,14 +122,40 @@ class MainWindow(QMainWindow):
                 widget.setParent(None)
                 widget.deleteLater()
 
+        self.duplicates = []
+
         for dubs in duplicates:
-            self.ui.verticalLayout_5.addWidget(DuplicateWidget(dubs, self, self.ui.path_lineEdit.text()))
+            wid = DuplicateWidget(dubs, self, self.ui.path_lineEdit.text())
+            self.duplicates.append(wid)
+            self.ui.verticalLayout_5.addWidget(wid)
 
         self.ui.progressBar.setValue(100)
         self.ui.progressBar_2.setValue(100)
         self.ui.scan_pushButton.setEnabled(True)
 
         self.ui.tabWidget.setCurrentIndex(1)
+
+    def move_to_trash(self):
+        to_delete = []
+        for widget in self.duplicates:
+            if widget.ui.checkBox.isChecked():
+                to_delete.append(widget.file_2)
+
+        if QMessageBox.question(self, "Вы уверены?",
+                                f"Вы уверены, что хотите переместить в корзину файлы ({len(to_delete)})?",
+                                QMessageBox.StandardButton.NoButton | QMessageBox.StandardButton.Yes) == QMessageBox.StandardButton.Yes:
+            QMessageBox.warning(self, "Файлы перемещены в корзину", "\n".join(to_delete), QMessageBox.StandardButton.Ok)
+
+    def delete_files(self):
+        to_delete = []
+        for widget in self.duplicates:
+            if widget.ui.checkBox.isChecked():
+                to_delete.append(widget.file_2)
+
+        if QMessageBox.question(self, "Вы уверены?",
+                                f"Вы уверены, что хотите удалить файлы ({len(to_delete)})?",
+                                QMessageBox.StandardButton.NoButton | QMessageBox.StandardButton.Yes) == QMessageBox.StandardButton.Yes:
+            QMessageBox.critical(self, "Файлы удалены", "\n".join(to_delete), QMessageBox.StandardButton.Ok)
 
 
 def main():
