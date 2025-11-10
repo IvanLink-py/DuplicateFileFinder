@@ -4,3 +4,6 @@ delete_unit_test
 delete_filename_length
 /.idea
 /design/__pycache__
+/*.spec
+/build
+/dist

@@ -59,7 +59,6 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
 
         self.ui.path_lineEdit.setText(os.path.abspath(os.curdir))
-        self.ui.path_lineEdit.setText(r"F:\LFS\Фотография")
 
         self.ui.pathEdit_pushButton.clicked.connect(self.set_path)
         self.ui.scan_pushButton.clicked.connect(self.scan)
