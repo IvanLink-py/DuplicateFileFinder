@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'MainWindowKYGWRo.ui'
+## Form generated from reading UI file 'MainWindowNaKfNm.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.0
 ##
@@ -68,6 +68,11 @@ class Ui_MainWindow(object):
         self.skipGit_checkBox.setObjectName(u"skipGit_checkBox")
 
         self.horizontalLayout_2.addWidget(self.skipGit_checkBox)
+
+        self.custom_ignore_lineEdit = QLineEdit(self.centralwidget)
+        self.custom_ignore_lineEdit.setObjectName(u"custom_ignore_lineEdit")
+
+        self.horizontalLayout_2.addWidget(self.custom_ignore_lineEdit)
 
         self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
@@ -151,7 +156,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 850, 220))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 98, 28))
         self.verticalLayout_6 = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
         self.verticalLayout_5 = QVBoxLayout()
@@ -206,7 +211,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -220,6 +225,7 @@ class Ui_MainWindow(object):
         self.skipSystem_checkBox.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0440\u043e\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u0441\u0438\u0441\u0442\u0435\u043c\u043d\u044b\u0435 \u0444\u0430\u0439\u043b\u044b", None))
         self.skipCache_checkBox.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0440\u043e\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u043a\u044d\u0448 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u043e\u0432", None))
         self.skipGit_checkBox.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0440\u043e\u043f\u0443\u0441\u0442\u0438\u0442\u044c .git", None))
+        self.custom_ignore_lineEdit.setPlaceholderText(QCoreApplication.translate("MainWindow", u"\u041f\u0440\u043e\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u0444\u0430\u0439\u043b\u044b", None))
         self.detailProgress_checkBox.setText(QCoreApplication.translate("MainWindow", u"\u041f\u043e\u0434\u0440\u043e\u0431\u043d\u044b\u0439 \u043f\u0440\u043e\u0433\u0440\u0435\u0441\u0441", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"\u0411\u044b\u0441\u0442\u0440\u043e\u0435 \u0441\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"\u0414\u0435\u0442\u0430\u043b\u044c\u043d\u043e\u0435 \u0441\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435", None))

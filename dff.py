@@ -19,6 +19,47 @@ class DuplicateFileFinderConfig:
         self.SCAN_SIZE_MB = self.BYTES_TO_SCAN / self.BYTES_IN_A_MEGABYTE
 
 
+class FileIgnoreList:
+    """Класс конфигурации для списка игнорируемых файлов"""
+
+    def __init__(self):
+        self.ignore_git = False
+        self.ignore_cache = False
+        self.ignore_system = False
+        self.ignore_string = ""
+
+    def _is_git_file(self, file):
+        if self.ignore_git:
+            return ".git" in file
+        return False
+
+    def _is_cache_file(self, file):
+        if self.ignore_cache:
+            return r"User Data\Default\Cache" in file
+        return False
+
+    def _is_system_file(self, file):
+        if self.ignore_system:
+            return "Windows" in file or "ProgramData" in file
+        return False
+
+    def _is_custom_file(self, file):
+        if self.ignore_string:
+            return self.ignore_string in file
+        return False
+
+    def is_ignore_file(self, file):
+        funcs = (self._is_git_file(file),
+                 self._is_cache_file(file),
+                 self._is_system_file(file),
+                 self._is_custom_file(file))
+
+        for r in funcs:
+            if r:
+                return True
+        return False
+
+
 class ProgressTracker:
     """Класс для отслеживания прогресса сканирования"""
 
@@ -174,13 +215,19 @@ class FileSizeAnalyzer:
         self.files_list: List[str] = []  # список файлов в порядке обхода
         self.total_files_count = 0
 
-    def scan_directory(self, directory_path: str):
+    def scan_directory(self, directory_path: str, ignore_list: FileIgnoreList):
         """
         Сканирует директорию и находит файлы с одинаковыми размерами
 
         Args:
             directory_path: Путь к директории для сканирования
+            ignore_list: Игнорируемые файлы
         """
+
+        self.size_to_file = {}
+        self.files_to_process = {}
+        self.files_list = []
+        self.total_files_count = 0
 
         try:
             for root, _, files in sorted(os.walk(directory_path)):
@@ -191,6 +238,9 @@ class FileSizeAnalyzer:
                     self.progress.show_progress(f"Проверка размера файла {file_path}", True)
 
                     try:
+                        if ignore_list.is_ignore_file(file_path):
+                            continue
+
                         file_size = os.path.getsize(file_path)
                         if file_size > 0:  # Игнорируем пустые файлы
                             self._process_file_size(file_path, file_size)
@@ -308,8 +358,9 @@ class OutputManager:
 class DuplicateFileFinder:
     """Основной класс для поиска дубликатов файлов"""
 
-    def __init__(self, config: Optional[DuplicateFileFinderConfig] = None):
-        self.config = config or DuplicateFileFinderConfig()
+    def __init__(self, _config: Optional[DuplicateFileFinderConfig] = None):
+        self.config = _config or DuplicateFileFinderConfig()
+        self.ignore_list = FileIgnoreList()
         self.progress = ProgressTracker()
         self.output_manager = OutputManager()
 
@@ -344,13 +395,15 @@ class DuplicateFileFinder:
         return total_files
 
     def find_duplicates(self, directory_path: str,
-                        progress_callback: Optional[Callable[[str, bool], None]] = None) -> list:
+                        progress_callback: Optional[Callable[[str, bool], None]] = None,
+                        ignore_list: Optional[FileIgnoreList] = None) -> list:
         """
         Основной метод для поиска дубликатов файлов
 
         Args:
             directory_path: Путь к директории для сканирования
             progress_callback: Функция обратного вызова для отображения прогресса
+            ignore_list: Список игнорируемых файлов
 
         Returns:
             Строка с результатами поиска
@@ -361,6 +414,8 @@ class DuplicateFileFinder:
             # Устанавливаем стандартный обработчик прогресса
             self.progress.set_progress_callback(self._default_progress_handler)
 
+        self.ignore_list = ignore_list or self.ignore_list
+
         self.progress.reset()
         self.progress.set_total_files(self.calculate_total_files(directory_path))
 
@@ -369,7 +424,7 @@ class DuplicateFileFinder:
 
         try:
             # Этап 1: Анализ размеров файлов
-            self.file_size_analyzer.scan_directory(directory_path)
+            self.file_size_analyzer.scan_directory(directory_path, self.ignore_list)
 
             # Этап 2: Поиск дубликатов по хешам
             duplicates = self._find_hash_duplicates()
